@@ -54,6 +54,7 @@ io.on('connection', function (socket) {
 
   //when the client emits 'advertise', we add it to the list and we send the list to all clients who requested discovery
   socket.on(constants.ADVERTISE, function (info) {
+    console.log('new user is advertising')
     console.log('new user is advertising:',info[constants.ENDPOINT_NAME]);
     info[constants.ENDPOINT_ID] = info[constants.ENDPOINT_NAME].replace(" ","_") + "_1";
     socket[constants.ADVERTISE] = info
