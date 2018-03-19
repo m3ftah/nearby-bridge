@@ -1,0 +1,16 @@
+{
+  "name": "socket.io-chat",
+  "version": "0.0.0",
+  "description": "Socket-io bridge for Android nearby connections",
+  "main": "index.js",
+  "author": "Lakhdar Meftah",
+  "private": true,
+  "license": "BSD",
+  "dependencies": {
+    "express": "4.13.4",
+    "socket.io": "^2.0.4"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
