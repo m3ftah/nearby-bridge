@@ -17,10 +17,10 @@ var acceptingConnection = [];
 
 var connected = [];
 
-var port = process.env.PORT || 3000;
+//var port = process.env.PORT || 3000;
 
-server.listen(port, function () {
-  console.log('Server listening at port %d', port);
+server.listen(3000, function () {
+  console.log('Server listening at port %d', 3000);
 });
 
 // Routing
