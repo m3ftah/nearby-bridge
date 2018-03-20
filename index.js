@@ -141,7 +141,6 @@ io.on('connection', function (socket) {
     }
   });
 
-
   socket.on(constants.PAYLOAD_RECEIVED, function (info) {
     console.log(id(socket),'has received the payload');
 
