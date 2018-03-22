@@ -11,6 +11,7 @@ module.exports = {
     NEW_MESSAGE : "new message",
     DISCONNECTING : "disconnecting",
     DISCONNECT : "disconnect",
+    DISCONNECTING : "disconnecting",
     REQUEST_CONNECTION : "requestConnection",
     ACCEPT_CONNECTION : "acceptConnection",
     ON_ENDPOINT_FOUND : "onEndpointFound",

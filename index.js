@@ -141,7 +141,6 @@ io.on('connection', function (socket) {
     }
   });
   
-
   socket.on(constants.PAYLOAD_RECEIVED, function (info) {
     console.log(id(socket),'has received the payload');
 
@@ -182,7 +181,10 @@ io.on('connection', function (socket) {
     if (adEndpointSockets.includes(socket)){//remove from the discovery table
       adEndpointSockets.splice(adEndpointSockets.indexOf(socket),1);
     }
-
+  });
+  // when the user disconnects.. perform this
+  socket.on(constants.DISCONNECT, function (data) {
+    console.log('Nearby Bridge lost connection with the device',data);
   });
   // when the device disconnects.. perform this
   socket.on(constants.DISCONNECT, function () {
