@@ -17,7 +17,7 @@ $(function() {
   var $chatPage = $('.chat.page'); // The chatroom page
 
   // Prompt for setting a username
-  var username;
+  var username = "Ui";
   var connected = false;
   var typing = false;
   var lastTypingTime;
@@ -25,12 +25,14 @@ $(function() {
 
   var socket = io();
 
+  socket.emit('Ui', username);
+
   function addParticipantsMessage (data) {
     var message = '';
     if (data.numUsers === 1) {
-      message += "there's 1 participant";
+      message += "there's 1 endpoint";
     } else {
-      message += "there are " + data.numUsers + " participants";
+      message += "there are " + data.numUsers + " endpoints";
     }
     log(message);
   }
@@ -47,7 +49,7 @@ $(function() {
       $currentInput = $inputMessage.focus();
 
       // Tell the server your username
-      socket.emit('add user', username);
+      
     }
   }
 
@@ -178,14 +180,14 @@ $(function() {
 
   // Gets the color of a username through our hash function
   function getUsernameColor (username) {
-    // Compute hash code
-    var hash = 7;
-    for (var i = 0; i < username.length; i++) {
-       hash = username.charCodeAt(i) + (hash << 5) - hash;
-    }
-    // Calculate color
-    var index = Math.abs(hash % COLORS.length);
-    return COLORS[index];
+    // // Compute hash code
+    // var hash = 7;
+    // for (var i = 0; i < username.length; i++) {
+    //    hash = username.charCodeAt(i) + (hash << 5) - hash;
+    // }
+    // // Calculate color
+    // var index = Math.abs(hash % COLORS.length);
+    return COLORS[1];
   }
 
   // Keyboard events
@@ -229,7 +231,7 @@ $(function() {
   socket.on('login', function (data) {
     connected = true;
     // Display the welcome message
-    var message = "Welcome to Socket.IO Chat – ";
+    var message = "Login successfully";
     log(message, {
       prepend: true
     });

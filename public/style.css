@@ -50,6 +50,7 @@ ul {
 
 .login.page {
   background-color: #000;
+  display: none;
 }
 
 .login.page .form {
@@ -88,9 +89,9 @@ ul {
 
 /* Chat page */
 
-.chat.page {
+/* .chat.page {
   display: none;
-}
+} */
 
 /* Font */
 

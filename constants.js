@@ -8,6 +8,8 @@ module.exports = {
     ADVERTISE : "advertise",
     STRATEGY : "strategy",
     DISCOVER : "discover",
+    NEW_MESSAGE : "new message",
+    DISCONNECTING : "disconnecting",
     DISCONNECT : "disconnect",
     REQUEST_CONNECTION : "requestConnection",
     ACCEPT_CONNECTION : "acceptConnection",
