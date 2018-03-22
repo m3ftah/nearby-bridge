@@ -17,7 +17,7 @@ var acceptingConnection = [];
 
 var connected = [];
 
-var port = process.env.PORT || 3000;
+var port = process.env.PORT || 80;
 
 server.listen(port, function () {
   console.log('Server listening at port %d', port);
@@ -142,8 +142,8 @@ io.on('connection', function (socket) {
   });
 
   // when the user disconnects.. perform this
-  socket.on(constants.DISCONNECT, function () {
-    console.log('a user is disconnected');
+  socket.on(constants.DISCONNECTING, function () {
+    console.log('a user is disconnecting');
 
     if (connected.includes(socket)){
       connected.splice(connected.indexOf(socket));
@@ -169,7 +169,10 @@ io.on('connection', function (socket) {
 		  //   }
 	    // }
     }
-
+  });
+  // when the user disconnects.. perform this
+  socket.on(constants.DISCONNECT, function (data) {
+    console.log('Nearby Bridge lost connection with the device',data);
   });
 });
 

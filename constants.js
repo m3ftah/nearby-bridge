@@ -9,6 +9,7 @@ module.exports = {
     STRATEGY : "strategy",
     DISCOVER : "discover",
     DISCONNECT : "disconnect",
+    DISCONNECTING : "disconnecting",
     REQUEST_CONNECTION : "requestConnection",
     ACCEPT_CONNECTION : "acceptConnection",
     ON_ENDPOINT_FOUND : "onEndpointFound",
