@@ -52,7 +52,6 @@ io.on('connection', function (socket) {
 
   //when the client emits 'advertise', we add it to the list and we send the list to all clients who requested discovery
   socket.on(constants.ADVERTISE, function (info) {
-    console.log('new user is advertising')
     console.log('new user is advertising:',info[constants.ENDPOINT_NAME]);
     info[constants.ENDPOINT_ID] = info[constants.ENDPOINT_NAME].replace(" ","_") + "_1";
     socket[constants.ADVERTISE] = info
@@ -92,6 +91,7 @@ io.on('connection', function (socket) {
 
   //when the client emits REQUEST_CONNECTION, we send the request to the other node
   socket.on(constants.REQUEST_CONNECTION, function (info) {
+    if (id(socket) == "") return
     console.log(id(socket),'is requesting connection with',info[constants.ENDPOINT_ID] );
     
     for (var i in adEndpointSockets){
@@ -218,6 +218,7 @@ function id(endpoint){
   var id = ""
   if (endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
     id = endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
+  else console.log("Id was not found for",endpoint)
   return id
 }
 
