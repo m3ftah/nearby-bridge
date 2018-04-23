@@ -99,6 +99,8 @@ io.on('connection', function (socket) {
         console.log("found, in progress for : ",id(socket),id(adEndpointSockets[i]))
         if (requestingConnection.indexOf(socket) == -1){
           requestingConnection.push(socket)
+        }
+        if (requestingConnection.indexOf(adEndpointSockets[i]) == -1){
           requestingConnection.push(adEndpointSockets[i])
         }
         socket[constants.ADVERTISE][constants.AUTH] = "0000"
