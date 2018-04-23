@@ -96,7 +96,7 @@ io.on('connection', function (socket) {
     
     for (var i in adEndpointSockets){
       if (id(adEndpointSockets[i]) == info[constants.ENDPOINT_ID]){
-
+        console.log("found, in progress for : ",id(socket),id(adEndpointSockets[i]))
         if (requestingConnection.indexOf(socket) == -1){
           requestingConnection.push(socket)
           requestingConnection.push(adEndpointSockets[i])
