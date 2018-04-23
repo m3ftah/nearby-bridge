@@ -216,7 +216,7 @@ io.on('connection', function (socket) {
 
 function id(endpoint){
   var id = ""
-  if (endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
+  if (endpoint && endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
     id = endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
   else console.log("Id was not found for",endpoint[constants.ADVERTISE])
   return id
