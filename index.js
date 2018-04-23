@@ -94,13 +94,18 @@ io.on('connection', function (socket) {
   socket.on(constants.REQUEST_CONNECTION, function (info) {
     console.log(id(socket),'is requesting connection with',info[constants.ENDPOINT_ID] );
     
-    for (var i in adEndpointSockets){      
+    for (var i in adEndpointSockets){
       if (id(adEndpointSockets[i]) == info[constants.ENDPOINT_ID]){
 
-        if (requestingConnection.indexOf(socket) == -1)
+        if (requestingConnection.indexOf(socket) == -1){
           requestingConnection.push(socket)
-        socket[constants.ADVERTISE][constants.AUTH] = "0000"
-        adEndpointSockets[i].emit(constants.ON_CONNECTION_INITIATED,socket[constants.ADVERTISE])
+          requestingConnection.push(adEndpointSockets[i])
+          socket[constants.ADVERTISE][constants.AUTH] = "0000"
+          adEndpointSockets[i][constants.ADVERTISE][constants.AUTH] = "0000"
+          adEndpointSockets[i].emit(constants.ON_CONNECTION_INITIATED,socket[constants.ADVERTISE])
+          socket.emit(constants.ON_CONNECTION_INITIATED,adEndpointSockets[i][constants.ADVERTISE])
+        }
+
       }
     }
   });
