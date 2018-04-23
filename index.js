@@ -187,7 +187,7 @@ io.on('connection', function (socket) {
       global.discEndpointSockets.splice(global.discEndpointSockets.indexOf(socket),1);
     }
     if (adEndpointSockets.includes(socket)){//remove from the discovery table
-      adEndpointSockets.splice(adEndpointSockets.indexOf(socket),1);
+      //adEndpointSockets.splice(adEndpointSockets.indexOf(socket),1);
     }
   });
   // when the user disconnects.. perform this
