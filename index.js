@@ -219,6 +219,7 @@ function id(endpoint){
   if (endpoint && endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
     id = endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
   return id
+  
 }
 
 global.disconnect = function(){
