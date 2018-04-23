@@ -100,11 +100,12 @@ io.on('connection', function (socket) {
         if (requestingConnection.indexOf(socket) == -1){
           requestingConnection.push(socket)
           requestingConnection.push(adEndpointSockets[i])
-          socket[constants.ADVERTISE][constants.AUTH] = "0000"
-          adEndpointSockets[i][constants.ADVERTISE][constants.AUTH] = "0000"
-          adEndpointSockets[i].emit(constants.ON_CONNECTION_INITIATED,socket[constants.ADVERTISE])
-          socket.emit(constants.ON_CONNECTION_INITIATED,adEndpointSockets[i][constants.ADVERTISE])
         }
+        socket[constants.ADVERTISE][constants.AUTH] = "0000"
+        adEndpointSockets[i][constants.ADVERTISE][constants.AUTH] = "0000"
+        adEndpointSockets[i].emit(constants.ON_CONNECTION_INITIATED,socket[constants.ADVERTISE])
+        socket.emit(constants.ON_CONNECTION_INITIATED,adEndpointSockets[i][constants.ADVERTISE])
+        
 
       }
     }
