@@ -93,7 +93,7 @@ io.on('connection', function (socket) {
   socket.on(constants.REQUEST_CONNECTION, function (info) {
     if (id(socket) == "") return
     console.log(id(socket),'is requesting connection with',info[constants.ENDPOINT_ID] );
-    //console.log("adEndpointSockets.length",adEndpointSockets.length)
+    console.log("adEndpointSockets.length",adEndpointSockets.length)
     for (var i in adEndpointSockets){
       if (id(adEndpointSockets[i]) == info[constants.ENDPOINT_ID]){
         console.log("found, in progress for : ",id(socket),id(adEndpointSockets[i]))
@@ -218,7 +218,7 @@ function id(endpoint){
   var id = ""
   if (endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
     id = endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
-  else console.log("Id was not found for",endpoint)
+  else console.log("Id was not found for",endpoint[constants.ADVERTISE])
   return id
 }
 
