@@ -131,9 +131,9 @@ io.on('connection', function (socket) {
             [constants.ENDPOINT_ID] : id(socket)})
         socket.emit(constants.ON_CONNECTION_RESULT,{[constants.STATE]:true,
             [constants.ENDPOINT_ID] : id(tmp[i])})
+        connected.push([requestingEndpoint,socket]);
       }
     }
-    connected.push([requestingEndpoint,socket]);
   });
 
   socket.on(constants.SEND_PAYLOAD, function (info) {
