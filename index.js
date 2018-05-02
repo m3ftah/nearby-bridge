@@ -5,6 +5,7 @@ const socketIO = require('socket.io');
 const path = require('path');
 var constants = require('./constants');
 var control = require('./control');
+var parse = require('./parse');
 
 const PORT = process.env.PORT || 80;
 const INDEX = path.join(__dirname, 'public');
@@ -16,6 +17,8 @@ const server = express()
 const io = socketIO(server);
 
 global.discEndpointSockets = [];
+
+global.all = [];
 
 var adEndpointSockets = [];
 
@@ -43,25 +46,90 @@ var uiSocket;
   };
 })();
 
-// Chatroom
 
+setInterval(discoverEndpoint, 5000);
+
+function discoverEndpoint(){
+  if (!global.discoveryCopy) global.discoveryCopy = [];
+  global.discovery.forEach((tab,tIndex)=>{
+    if (global.all[tIndex] && global.all[tIndex][constants.DISCOVER]){//the endpoint is discovering.
+      var socket = global.all[tIndex];
+      var tmp = [];
+      tab.forEach((near,index) => {
+          //console.log(index);
+          var notified = false;
+          if(global.discoveryCopy && global.discoveryCopy[tIndex] &&
+              global.discoveryCopy[tIndex][index] && global.discoveryCopy[tIndex][index] == near){
+                notified = true
+                console.log("already notifed", index, "and", tIndex);
+          }
+          var endpoint = global.all[index];
+          if (!notified && endpoint && endpoint[constants.ADVERTISE]){//The other endpoint has already advertised
+            if (near){//near
+              tmp.push(index);
+              console.log(tIndex,socket.id,"has discovered", endpoint.id);
+              socket.emit(constants.ON_ENDPOINT_FOUND,endpoint[constants.ADVERTISE]);
+              socket.discovered.push(endpoint.id);
+              if (socket[constants.ADVERTISE]){
+                endpoint.emit(constants.ON_ENDPOINT_FOUND,socket[constants.ADVERTISE]);
+                endpoint.discovered.push(socket.id);
+              }
+            }else{//away
+              console.log(index,"is away from",tIndex);
+              socket.emit(constants.ON_ENDPOINT_LOST,{[constants.ENDPOINT_ID] : endpoint.id});
+              endpoint.emit(constants.ON_ENDPOINT_LOST,{[constants.ENDPOINT_ID] : socket.id});
+              socket.discovered.splice(socket.discovered.indexOf(endpoint.id),1);         
+              endpoint.discovered.splice(endpoint.discovered.indexOf(socket.id),1);
+            }
+            
+          }
+          if (!endpoint){
+            //console.log(index, "endpoint in dataset, but didn't connect");
+          }
+          else if (!endpoint[constants.ADVERTISE]) console.log("endpoint in dataset but didn't advertise yet");
+      });
+      console.log(global.second + ":",tIndex,tmp)
+    }else if (global.all[tIndex]) console.log(tIndex,"Endpoint did not discover");
+    else console.log(tIndex, "endpoint doesn't exist yet");
+  })
+  for (var i = 0; i < global.discovery.length; i++)
+    if (global.discovery[i])
+      global.discoveryCopy[i] = global.discovery[i].slice();
+};
+
+// Chatroom
+var started = false;
 io.on('connection', function (socket) {
   var addedUser = false;
   
+  if (!started){
+    //Parse
+    parse.init();
+    started = true;
+  }
   console.log("new Connection", socket.handshake.headers['user-agent'])
+  global.all.push(socket);
+  socket.discovered = []
+  console.log("number of connected Endpoints:",global.all.length)
 
   //when the client emits 'advertise', we add it to the list and we send the list to all clients who requested discovery
   socket.on(constants.ADVERTISE, function (info) {
     console.log('new user is advertising:',info[constants.ENDPOINT_NAME]);
-    info[constants.ENDPOINT_ID] = info[constants.ENDPOINT_NAME].replace(" ","_") + "_1";
+    info[constants.ENDPOINT_ID] = info[constants.ENDPOINT_NAME];//.replace(" ","_");// + "_1";
     socket[constants.ADVERTISE] = info
+    socket.id = info[constants.ENDPOINT_ID]
     adEndpointSockets.push(socket)
 
     for(var i in global.discEndpointSockets){//Send this Endpoint to the endpoints that are discovering.
         if(global.discEndpointSockets[i] != socket){
           global.discEndpointSockets[i].emit(constants.ON_ENDPOINT_FOUND, socket[constants.ADVERTISE]);
+          global.discEndpointSockets[i].discovered.push(socket.id);
+
         }
     }
+    global.discEndpointSockets.forEach((element, index) => {
+      //console.log(index, element.discovered ? element.discovered.length : 0)
+    });
   });
     
   //when the client emits 'discovery', we send to him the list of client
@@ -69,34 +137,35 @@ io.on('connection', function (socket) {
     console.log('new endpoint is discovering:',info[constants.SERVICE_ID]);
     socket[constants.DISCOVER] = info
     global.discEndpointSockets.push(socket)
-
-    for (var i in adEndpointSockets){
-      if (adEndpointSockets[i]!=socket){
-        socket.emit(constants.ON_ENDPOINT_FOUND,adEndpointSockets[i][constants.ADVERTISE])
-      }
+    if (!socket.discovered){//For the first time
+      socket.discovered =[]
     }
+    
+    // global.all.forEach((element, index) => {
+    //   console.log(index, element.discovered ? element.discovered.length : 0)
+    // });
   });
 
   socket.on(constants.STOP_DISCOVERY, function (info) {
-    console.log('endpoint:',id(socket),'is stopping discovering');
+    console.log('endpoint:',socket.id,'is stopping discovering');
     global.discEndpointSockets.splice(global.discEndpointSockets.indexOf(socket),1);
     console.log('global.discEndpointSockets.length', global.discEndpointSockets.length)
   });
   
   socket.on(constants.STOP_ADVERTISING, function (info) {
-    console.log('endpoint:',id(socket),'is stopping advertising');
+    console.log('endpoint:',socket.id,'is stopping advertising');
     adEndpointSockets.splice(adEndpointSockets.indexOf(socket),1);
     console.log('adEndpointSockets.length', adEndpointSockets.length)
   });
 
   //when the client emits REQUEST_CONNECTION, we send the request to the other node
   socket.on(constants.REQUEST_CONNECTION, function (info) {
-    if (id(socket) == "") return
-    console.log(id(socket),'is requesting connection with',info[constants.ENDPOINT_ID] );
-    console.log("adEndpointSockets.length",adEndpointSockets.length)
+    socket.id = info[constants.ENDPOINT_NAME]
+    console.log(socket.id,'is requesting connection with',info[constants.ENDPOINT_ID] );
+    //console.log("adEndpointSockets.length",adEndpointSockets.length)
     for (var i in adEndpointSockets){
-      if (id(adEndpointSockets[i]) == info[constants.ENDPOINT_ID]){
-        console.log("found, in progress for : ",id(socket),id(adEndpointSockets[i]))
+      if (adEndpointSockets[i].id == info[constants.ENDPOINT_ID]){
+        //console.log("found, in progress for : ",socket.id,adEndpointSockets[i].id)
         if (requestingConnection.indexOf(socket) == -1){
           requestingConnection.push(socket)
         }
@@ -114,34 +183,48 @@ io.on('connection', function (socket) {
   });
 
   socket.on(constants.ACCEPT_CONNECTION, function (info) {
-    console.log(id(socket),'is accepting connection with',info[constants.ENDPOINT_ID] );
-    if (getGroup(connected,id(socket)).length){//Check if this endpoint is already connected?
-      console.log("endpoint",id(socket),"is already connected");
-      return;
+    //console.log(socket.id,'is accepting connection with',info[constants.ENDPOINT_ID] );
+    if (getGroup(connected,socket.id).length){//Check if this endpoint is already connected?
+      //console.log("endpoint",socket.id,"is already connected, but accepting...");
+      //return;
     }
-    console.log('first accepting', connected.length)
     var tmp = requestingConnection.slice();
     var requestingEndpoint;
+
     for (var i in tmp){
-      if (id(tmp[i]) == info[constants.ENDPOINT_ID]){
-        console.log('connection is accepted')
+      if (tmp[i].id == info[constants.ENDPOINT_ID]){
+        //console.log('connection is accepted')
         requestingEndpoint = tmp[i];
         requestingConnection.splice(i,1);
         tmp[i].emit(constants.ON_CONNECTION_RESULT,{[constants.STATE]:true,
-            [constants.ENDPOINT_ID] : id(socket)})
+            [constants.ENDPOINT_ID] : socket.id})
         socket.emit(constants.ON_CONNECTION_RESULT,{[constants.STATE]:true,
-            [constants.ENDPOINT_ID] : id(tmp[i])})
+            [constants.ENDPOINT_ID] : tmp[i].id})
         connected.push([requestingEndpoint,socket]);
       }
     }
   });
 
   socket.on(constants.SEND_PAYLOAD, function (info) {
-    console.log(id(socket),'is sending payload ',info[constants.PAYLOAD],'to',info[constants.ENDPOINT_ID] );
+    //console.log(socket.id,'is sending payload ',info[constants.PAYLOAD],'to',info[constants.ENDPOINT_ID] );
+    var endpoints = info[constants.PAYLOAD].split(',')
+    endpoints.forEach(element => {
+      if (element != socket.id){
+        global.all.forEach(aElement => {
+          if (aElement.id == element){
+            if (!aElement.reached) aElement.reached = []
+            if (aElement.reached.indexOf(socket.id) === -1) aElement.reached.push(socket.id);
+          }
+        })
+      }
+    })
+    global.all.forEach( (element,index) => {
+      //console.log(index, element.reached ? element.reached.length : 0)
+    })
 
-    var group = getGroup(connected,id(socket))
+    var group = getGroup(connected,socket.id)
     for (var i in group){
-      if (id(group[i]) == info[constants.ENDPOINT_ID]){
+      if (group[i].id == info[constants.ENDPOINT_ID]){
         group[i].emit(constants.ON_PAYLOAD_RECEIVED,info)
         group[i].emit(constants.ON_PAYLOAD_TRANSFER_UPDATE,info)
         socket.emit(constants.ON_PAYLOAD_TRANSFER_UPDATE,info)
@@ -150,11 +233,11 @@ io.on('connection', function (socket) {
   });
   
   socket.on(constants.PAYLOAD_RECEIVED, function (info) {
-    console.log(id(socket),'has received the payload');
+    //console.log(socket.id,'has received the payload');
 
-    var group = getGroup(connected,id(socket))
+    var group = getGroup(connected,socket.id)
     for (var i in group){
-      if (id(group[i]) == info[constants.ENDPOINT_ID]){
+      if (group[i].id == info[constants.ENDPOINT_ID]){
         group[i].emit(constants.ON_PAYLOAD_TRANSFER_UPDATE,info)
         socket.emit(constants.ON_PAYLOAD_TRANSFER_UPDATE,info)
       }
@@ -163,14 +246,14 @@ io.on('connection', function (socket) {
 
   // when the user disconnects.. perform this
   socket.on(constants.DISCONNECTING, function () {
-    console.log('a device is asking to disconnect');
+    //console.log('a device is asking to disconnect');
 
-    var group = getGroup(connected,id(socket))
+    var group = getGroup(connected,socket.id)
 
     if (group.length){//remove from connected table
-      console.log(connected.length);
+      //console.log(connected.length);
       connected.splice(connected.indexOf(group),1);
-      console.log(connected.length)
+      //console.log(connected.length)
       for(var j=0;j<group.length;j++){
         if ( group[j] != socket){
           console.log('sending disconnect to',group[j][constants.ADVERTISE][constants.ENDPOINT_ID],'from :', socket[constants.ADVERTISE][constants.ENDPOINT_ID]);
@@ -180,23 +263,20 @@ io.on('connection', function (socket) {
         }
       }
     }else{
-      console.log('is not connected, but requested disconnection');
-      console.log(connected.length);
+      //console.log('is not connected, but requested disconnection');
+      //console.log(connected.length);
     }  
     if (global.discEndpointSockets.includes(socket)){//remove from the discovery table
-      global.discEndpointSockets.splice(global.discEndpointSockets.indexOf(socket),1);
+      //global.discEndpointSockets.splice(global.discEndpointSockets.indexOf(socket),1);
     }
-    if (adEndpointSockets.includes(socket)){//remove from the discovery table
+    if (adEndpointSockets.includes(socket)){//remove from the advertising table
       //adEndpointSockets.splice(adEndpointSockets.indexOf(socket),1);
     }
   });
-  // when the user disconnects.. perform this
-  socket.on(constants.DISCONNECT, function (data) {
-    console.log('Nearby Bridge lost connection with the device',data);
-  });
   // when the device disconnects.. perform this
   socket.on(constants.DISCONNECT, function () {
-    console.log('device is disconnected from Nearby Bridge Server');
+    console.log('device is disconnected from Nearby Bridge Server:');
+    console.log(socket[constants.ADVERTISE])
   });
 
   // when the device disconnects.. perform this
@@ -214,13 +294,14 @@ io.on('connection', function (socket) {
 
 });
 
-function id(endpoint){
-  var id = ""
-  if (endpoint && endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
-    id = endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
-  return id
-  
-}
+// function id(endpoint){
+//   return endpoint.id ? endpoint.id : "";
+//   // var id = ""
+//   // if (endpoint && endpoint[constants.ADVERTISE] && endpoint[constants.ADVERTISE][constants.ENDPOINT_ID])
+//   //   return endpoint[constants.ADVERTISE][constants.ENDPOINT_ID]
+//   // else if (socket.id) return socket.id
+//   // return id
+// }
 
 global.disconnect = function(){
   for(var i in connected){
@@ -240,7 +321,7 @@ function getGroup(table,endpointId){
   for (var i in table){
     var group = table[i];
     for (var j in group){
-      if (id(group[j]) ==endpointId){
+      if (group[j].id ==endpointId){
         return group;
       }
     }
